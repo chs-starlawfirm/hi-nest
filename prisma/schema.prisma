@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 회원 테이블
+model Users {
+  id            BigInt      @id @default(autoincrement())               // id
+  email         String                                                  // 이메일
+  password      String                                                  // 비밀번호
+  name          String                                                  // 이름
+  sex           String                                                  // 성별
+  birth         String                                                  // 생년월일
+  postalCode    String      @map("postal_code")                         // 우편번호
+  address       String                                                  // 주소
+  detailAddress String      @map("detail_address")                      // 상세 주소
+  phone         String                                                  // 폰 번호
+  auth          String      @default("고객")                            // 권한
+  createAt      DateTime    @map("create_at") @default(now()) @db.Date // 회원가입 날짜
+  updateAt      DateTime?   @map("update_at")  @db.Date                 // 정보 수정 날짜
+  lastLoginAt   DateTime?   @map("last_login_at") @db.Date              // 최근 로그인 날짜
+
+  logs          Logs[]
+
+  @@index([name],type :BTree)
+  @@index([email],type :BTree)
+  @@index([address],type :BTree)
+  @@index([createAt], name: "brin_index_on_create_at", type: Brin)
+
+  @@unique([email, phone], name: "unique_email_and_phone")
+}
+
+// 로그 테이블
+model Logs {
+  logId         BigInt      @id @default(autoincrement())                 // log id
+  status        String      @default("가입")                              // 상태
+  time          DateTime    @default(now()) @db.Date         // 로그 시간
+
+  userId        BigInt
+  user          Users       @relation(fields: [userId], references: [id])
+
+  @@index([status],type :BTree)
+  @@index([time], name: "brin_index_on_time", type: Brin)
+}
